@@ -16,8 +16,8 @@ SupabaseApi api = new SupabaseApi()
 Once you have done that you're going to configure your request
 ````java
  SupabaseRequest request = ((SupabaseRequestUpdate)SupabaseRequest.create("players")
-        .method(MethodType.Update))
-        .filter("name=eq.Tim")
+        .method(MethodType.UPDATE))
+        .filter("name", SupabaseOperators.EQUALS, "Tim")
         .postValue("{\"name\":\"Max\", \"age\":15}")
 ````
 
