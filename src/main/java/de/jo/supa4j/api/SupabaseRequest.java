@@ -1,26 +1,61 @@
 package de.jo.supa4j.api;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
+import de.jo.supa4j.api.impl.SupabaseRequestDelete;
+import de.jo.supa4j.api.impl.SupabaseRequestGet;
+import de.jo.supa4j.api.impl.SupabaseRequestPost;
+import de.jo.supa4j.api.impl.SupabaseRequestUpdate;
 import de.jo.supa4j.http.util.Field;
 import de.jo.supa4j.http.util.MethodType;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class SupabaseRequest {
+public abstract class SupabaseRequest {
 
-    private String table;
-    private String select;
-    private final List<String> filters = new ArrayList<>();
-    private MethodType type = MethodType.GET;
-    private String postValue;
+    protected String table;
 
     public SupabaseRequest(String table) {
         this.table = table;
     }
-
     public SupabaseRequest() {
+    }
+
+    public static SupabaseRequest create(String table) {
+        return new SupabaseRequest(table) {
+            @Override
+            public String toRequest() {
+                return "Invalid Request";
+            }
+
+            @Override
+            public <T extends SupabaseRequest> T of(SupabaseRequest request) {
+                return null;
+            }
+
+            @Override
+            public MethodType type() {
+                return MethodType.GET;
+            }
+        };
+    }
+
+    public static SupabaseRequest create() {
+        return new SupabaseRequest() {
+            @Override
+            public String toRequest() {
+                return "Invalid Request";
+            }
+
+            @Override
+            public <T extends SupabaseRequest> T of(SupabaseRequest request) {
+                return null;
+            }
+
+            @Override
+            public MethodType type() {
+                return MethodType.GET;
+            }
+        };
     }
 
     public SupabaseRequest table(String table) {
@@ -28,60 +63,25 @@ public class SupabaseRequest {
         return this;
     }
 
-    public SupabaseRequest method(MethodType type) {
-        this.type = type;
-        return this;
-    }
-    public SupabaseRequest postValue(String value) {
-        this.postValue = value;
-        return this;
-    }
-    public SupabaseRequest postValue(Object value) {
-        Gson gson = new GsonBuilder().create();
-        this.postValue = gson.toJson(value);
-        return this;
-    }
-
-    public SupabaseRequest filter(Field filter) {
-        return filter(filter.key, filter.value);
-    }
-    public SupabaseRequest filter(String key, String value) {
-        return filter(key + "=" + value);
-    }
-    public SupabaseRequest filter(String statement) {
-        this.filters.add(statement);
-        return this;
-    }
-
-    public SupabaseRequest select(String select) {
-        this.select = select;
-        return this;
-    }
-
-    public String toRequest() {
-        StringBuilder sb = new StringBuilder();
-        sb.append(this.table);
-        if(type != MethodType.POST) {
-            sb.append(this.table.endsWith("?") ? "" : "?");
-            for (int i = 0; i < filters.size(); i++) {
-                if (i != 0) sb.append("&");
-                sb.append(filters.get(i));
-            }
+    public <T extends SupabaseRequest>T method(MethodType type) {
+        switch (type) {
+            case POST:
+                return (T) new SupabaseRequestPost().of(this);
+            case UPDATE:
+                return (T) new SupabaseRequestUpdate().of(this);
+            case DELETE:
+                return (T) new SupabaseRequestDelete().of(this);
+            default:
+                return (T) new SupabaseRequestGet().of(this);
         }
-        if(type == MethodType.GET) {
-            if(filters.size() > 0) {
-                sb.append("&");
-            }
-            sb.append("select=");
-            sb.append(this.select);
-        }
+    }
 
-        return sb.toString();
+    public abstract String toRequest();
+    public String getTable() {
+        return table;
     }
-    public MethodType getType() {
-        return type;
-    }
-    public String getPostValue() {
-        return postValue;
-    }
+
+    public abstract <T extends SupabaseRequest>T of(SupabaseRequest request);
+    public abstract MethodType type();
+
 }

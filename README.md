@@ -10,15 +10,15 @@ First, you need to get an instance of the API
 SupabaseApi api = new SupabaseApi()
             .url("https://yoursupabase.supabase.co")
             .apikey("SUPABASE-KEY")
-            .noLog(); //<- If you do not want requests to be logged to console
+            .log(false); //<- If you do not want requests to be logged to console
 ````
 
 Once you have done that you're going to configure your request
 ````java
-SupabaseRequest request = new SupabaseRequest("players")
-                .select("*")
-                .method(MethodType.GET)
-                .filter("name=eq.Tim")
+ SupabaseRequest request = ((SupabaseRequestUpdate)SupabaseRequest.create("players")
+        .method(MethodType.Update))
+        .filter("name=eq.Tim")
+        .postValue("{\"name\":\"Max\", \"age\":15}")
 ````
 
 Finally to get the return value you have to actually send the request
